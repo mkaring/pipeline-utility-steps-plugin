@@ -35,16 +35,14 @@ import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepEx
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 
 import javax.inject.Inject;
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.zip.ZipEntry;
@@ -143,7 +141,10 @@ public class UnZipStepExecution extends AbstractSynchronousNonBlockingStepExecut
                             logger.print(entry.getName());
                             logger.print(" -> ");
                             logger.println(f.getRemote());
-                            IOUtils.copy(zip.getInputStream(entry), f.write());
+                            try (OutputStream outputStream = f.write()) {
+                                IOUtils.copy(zip.getInputStream(entry), outputStream);
+                                outputStream.flush();
+                            }
                         } else {
                             logger.print("Reading: ");
                             logger.println(entry.getName());
